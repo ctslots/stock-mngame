@@ -1,0 +1,33 @@
+<template name="arenaInfo">
+  <div class="card">
+    <div class="card-block">
+      <h1 class="card-title mb-1">最萌亂鬥大賽</h1>
+      <hr />
+      {{> arenaInfoNav}}
+      <hr />
+
+      {{#if paramArena}}
+        {{#if isArenaEnded}}
+          <div>本屆最萌亂鬥大賽已經結束！</div>
+        {{else if isArenaJoinEnded}}
+          <div class="text-warning">本屆最萌亂鬥大賽報名已經截止。</div>
+        {{else}}
+          <div class="text-info">本屆最萌亂鬥大賽正在報名中。</div>
+        {{/if}}
+        <hr />
+
+        <h4>{{fighterListTitle}}</h4>
+        {{> arenaInfoFighterList paramArena}}
+
+        {{#if isArenaEnded}}
+          <hr />
+          {{#panelFolder name='logList' title='戰鬥紀錄'}}
+            {{> arenaInfoLogList paramArena}}
+          {{/panelFolder}}
+        {{/if}}
+      {{else}}
+        <div>Loading...</div>
+      {{/if}}
+    </div>
+  </div>
+</template>

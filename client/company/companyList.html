@@ -1,0 +1,322 @@
+<template name="companyList">
+  <div class="card">
+    <div class="card-block">
+      <h1 class="card-title mb-1">股市總覽</h1>
+      <hr />
+      {{> companyFilterForm}}
+      <hr />
+      {{#with paginationData}}
+        {{> pagination}}
+      {{/with}}
+      {{#if viewModeIsCard}}
+        <div class="media">
+          <div class="media-body row">
+            {{#each companyList}}
+              {{> companyListCard}}
+            {{/each}}
+          </div>
+        </div>
+      {{else}}
+        {{#each companyList}}
+          {{> companyListTable}}
+        {{/each}}
+      {{/if}}
+      {{#with paginationData}}
+        {{> pagination}}
+      {{/with}}
+    </div>
+  </div>
+</template>
+
+<template name="companyFilterForm">
+  <form class="form-inline">
+    <button class="btn btn-secondary mr-1" type="button" data-action="toggleViewMode">
+      <i class="fa {{viewModeBtnClass}}" aria-hidden="true"></i>
+    </button>
+    <div class="dropdown">
+      <button class="btn btn-secondary mr-1 dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+        {{filterModeText}}
+      </button>
+      <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+        <a class="dropdown-item" href="#" value="none" data-action="filterBy">全部顯示</a>
+        {{#if currentUser}}
+          <a class="dropdown-item" href="#" value="favorite" data-action="filterBy">只顯示最愛</a>
+          <a class="dropdown-item" href="#" value="mine" data-action="filterBy">只顯示持有</a>
+          <a class="dropdown-item" href="#" value="order" data-action="filterBy">只顯示訂單</a>
+        {{/if}}
+      </div>
+    </div>
+    <div class="d-flex flex-wrap">
+      <button class="{{sortByBtnClass 'lastPrice'}}" value="lastPrice" type="button" data-action="sortBy">
+        依股價排序
+      </button>
+      <button class="{{sortByBtnClass 'totalValue'}}" value="totalValue" type="button" data-action="sortBy">
+        依總市值排序
+      </button>
+      <button class="{{sortByBtnClass 'capital'}}" value="capital" type="button" data-action="sortBy">
+        依資本額排序
+      </button>
+      <button class="{{sortByBtnClass 'createdAt'}}" value="createdAt" type="button" data-action="sortBy">
+        依上市日期排序
+      </button>
+    </div>
+    <div class="d-flex flex-wrap justify-content-center">
+      <input class="form-control" type="text" name="keyword" placeholder="請輸入關鍵字" value="{{keyword}}" />
+      <select class="form-control" name="matchType">
+        <option value="exact" {{showMatchTypeSelectedAttr 'exact'}}>完全比對</option>
+        <option value="fuzzy" {{showMatchTypeSelectedAttr 'fuzzy'}}>模糊比對</option>
+      </select>
+      <button type="submit" class="btn btn-primary">
+        <i class="fa fa-search" aria-hidden="true"></i> 搜索
+      </button>
+    </div>
+  </form>
+</template>
+
+<template name="companyListCard">
+  <div class="col-12 col-md-6 col-lg-4 col-xl-3" style="margin-bottom: 25px;">
+    <div class="company-card {{cardDisplayClass this}}">
+      <div class="row row-info">
+        <small class="ml-3">{{formatDateTimeText this.createdAt}} 創立</small>
+        {{#if currentUser}}
+          {{#if isFavorite this._id}}
+            <i class="fa fa-heart btn-favorite" aria-hidden="true" data-toggle-favorite="{{this._id}}"></i>
+          {{else}}
+            <i class="fa fa-heart-o btn-favorite" aria-hidden="true" data-toggle-favorite="{{this._id}}"></i>
+          {{/if}}
+        {{/if}}
+      </div>
+      <hr class="m-0"/>
+      {{#if this.illegalReason}}
+        <div class="row text-left illegal-description">
+          <div class="col text-center text-white text-truncate" title="{{this.illegalReason}}">
+            <i class="fa fa-warning"></i>
+            {{this.illegalReason}}
+          </div>
+        </div>
+        <hr class="m-0"/>
+      {{/if}}
+      <div class="row row-cover d-flex justify-content-around">
+        <div class="d-flex flex-column align-self-center">
+          <div class="picture">
+          {{#if this.pictureSmall}}
+            <img src="{{this.pictureSmall}}" />
+          {{else}}
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/ac/No_image_available.svg/300px-No_image_available.svg.png" />
+          {{/if}}
+        </div>
+        </div>
+      </div>
+      <div class="title">
+        {{>companyLink this._id}}
+      </div>
+      <div class="row row-info d-flex flex-column justify-content-between">
+        <div class="text-left mx-3">
+          {{#if isCurrentUserChairmanOf this._id}}
+            <a href="#" data-action="changeChairmanTitle">
+              {{this.chairmanTitle}}
+            </a>
+          {{else}}
+            {{this.chairmanTitle}}
+          {{/if}}
+        </div>
+        <div class="text-right mx-3">
+          <h4 class="text-truncate">{{>userLink this.chairman}}</h4>
+        </div>
+      </div>
+      <div class="row row-info d-flex flex-column justify-content-between">
+        <div class="text-left mx-3">
+          經理人
+        </div>
+        <div class="text-right mx-3 text-truncate">
+          <h4 class="text-truncate">{{>userLink this.manager}}</h4>
+        </div>
+      </div>
+      <hr class="m-0">
+      <div class="row row-info d-flex justify-content-between">
+        <p>股票價格</p>
+        <p class="{{priceDisplayClass this.lastPrice this.listPrice}}">
+          $ {{currencyFormat this.lastPrice}}({{currencyFormat this.listPrice}})
+        </p>
+      </div>
+      <div class="row row-info d-flex justify-content-between">
+        <p>資本額</p>
+        <p>$ {{currencyFormat this.capital}}</p>
+      </div>
+      <div class="row row-info d-flex justify-content-between">
+        <p>總市值</p>
+        <p>$ {{currencyFormat this.totalValue}}</p>
+      </div>
+      <div class="row row-info d-flex justify-content-between">
+        <p>總釋股量</p>
+        <p>{{this.totalRelease}}</p>
+      </div>
+      <div class="row row-info d-flex justify-content-between">
+        <p>每股盈餘</p>
+        <p>{{currencyFormat(getCompanyEPS this)}}</p>
+      </div>
+      {{#if currentUser}}
+        <div class="row row-info d-flex justify-content-between">
+          <p>持有股份</p>
+          <p>{{getCurrentUserOwnedStockAmount this._id}} ({{getStockPercentage this._id this.totalRelease}}%)</p>
+        </div>
+        {{#if existOwnOrder this._id}}
+          <hr class="m-0">
+          <div class="row">
+            <button class="btn btn-tab accordion dropdown-toggle" data-expand-order="1">顯示未完成訂單</button>
+            <div class="order-panel">
+              {{#each ownOrderList this._id}}
+                <div class="mb-1">
+                  {{orderType}}{{done}}/{{amount}} (${{unitPrice}})
+                  <button class="btn btn-danger btn-sm" type="button" data-cancel-order="{{_id}}">
+                    取消
+                  </button>
+                </div>
+              {{/each}}
+            </div>
+          </div>
+        {{/if}}
+        <hr class="m-0">
+        <div class="row btn-group">
+          {{#if currentUserCanManage this}}
+            <a class="btn btn-tab" href="{{getManageHref this._id}}">
+              經營管理
+            </a>
+          {{/if}}
+          <button class="btn btn-tab" type="button" data-action="createBuyOrder">
+            購入
+          </button>
+          {{#if getCurrentUserOwnedStockAmount this._id}}
+            <button class="btn btn-tab" type="button" data-action="createSellOrder">
+              賣出
+            </button>
+          {{/if}}
+        </div>
+      {{/if}}
+    </div>
+  </div>
+</template>
+
+<template name="companyListTable">
+  <div class="media company-summary-item">
+    <div class="d-sm-flex picture">
+      {{#if this.pictureSmall}}
+        <img src="{{this.pictureSmall}}" />
+      {{else}}
+        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/ac/No_image_available.svg/300px-No_image_available.svg.png" />
+      {{/if}}
+    </div>
+    <div class="media-body row border-grid-body">
+      {{#if this.illegalReason}}
+        <div class="col-12 text-center text-danger text-truncate border-grid" title="{{showIllegalDescription}}">
+          <i class="fa fa-warning"></i>
+          本公司已被標記為違規！原因：{{this.illegalReason}}
+        </div>
+      {{/if}}
+      <div class="col-4 col-lg-3 text-truncate text-right border-grid row-title">角色名稱</div>
+      <div class="col-8 col-lg-9 text-truncate border-grid">
+        {{>companyLink this._id}}
+      </div>
+      <div class="col-4 col-lg-3 text-truncate text-right border-grid row-title">創立日期</div>
+      <div class="col-8 col-lg-3 text-truncate text-right border-grid" title="{{formatDateTimeText this.createdAt}}">
+        {{formatDateTimeText this.createdAt}}
+      </div>
+      <div class="col-4 col-lg-3 text-truncate text-right border-grid row-title" title="{{this.chairmanTitle}}">
+        {{#if isCurrentUserChairmanOf this._id}}
+          <a class="text-truncate" href="#" data-action="changeChairmanTitle">
+            {{this.chairmanTitle}}
+          </a>
+        {{else}}
+          {{this.chairmanTitle}}
+        {{/if}}
+      </div>
+      <div class="col-8 col-lg-3 text-truncate border-grid">
+        {{>userLink this.chairman}}
+      </div>
+      <div class="col-4 col-lg-3 text-truncate text-right border-grid row-title">經理人</div>
+      <div class="col-8 col-lg-3 text-truncate border-grid">
+        {{>userLink this.manager}}
+      </div>
+      <div class="col-4 col-lg-3 text-truncate text-right border-grid row-title">股票價格</div>
+      <div class="col-8 col-lg-3 text-truncate text-right border-grid">
+        <span class="{{priceDisplayClass this.lastPrice this.listPrice}}">
+          $ {{currencyFormat this.lastPrice}}({{currencyFormat this.listPrice}})
+        </span>
+      </div>
+      <div class="col-4 col-lg-3 text-truncate text-right border-grid row-title">資本額</div>
+      <div class="col-8 col-lg-3 text-truncate text-right border-grid">
+        $ {{currencyFormat this.capital}}
+      </div>
+      <div class="col-4 col-lg-3 text-truncate text-right border-grid row-title">總市值</div>
+      <div class="col-8 col-lg-3 text-truncate text-right border-grid">
+        $ {{currencyFormat this.totalValue}}
+      </div>
+      <div class="col-4 col-lg-3 text-truncate text-right border-grid row-title">總釋股量</div>
+      <div class="col-8 col-lg-3 text-truncate text-right border-grid">
+        <span class="{{priceDisplayClass this.lastPrice this.listPrice}}">
+          {{this.totalRelease}}
+        </span>
+      </div>
+      <div class="col-4 col-lg-3 text-truncate text-right border-grid row-title">每股盈餘</div>
+      <div class="col-8 col-lg-3 text-right border-grid">
+        <span class="text-truncate {{priceDisplayClass this.lastPrice this.listPrice}}">
+          {{currencyFormat(getCompanyEPS this)}}
+        </span>
+      </div>
+      {{#if currentUser}}
+        <div class="col-12 border-grid">
+          {{#if isCurrentUser this.manager}}
+            <div class="mb-1">
+              您是該公司的經理人。
+              <a class="btn btn-primary btn-sm" href="{{getManageHref this._id}}">
+                經營管理
+              </a>
+            </div>
+          {{else}}
+            {{#if currentUserHasRole 'fscMember'}}
+              <div class="mb-1">
+                <a class="btn btn-primary btn-sm" href="{{getManageHref this._id}}">
+                  經營管理
+                </a>
+              </div>
+            {{/if}}
+          {{/if}}
+
+          <div class="mb-1">
+            {{#if isFavorite this._id}}
+              您已將此公司加入最愛。
+              <a class="btn btn-primary btn-sm" href="#" data-action="toggleFavorite" data-toggle-favorite="{{this._id}}">
+                移除最愛
+              </a>
+            {{else}}
+              您未將此公司加入最愛。
+              <a class="btn btn-primary btn-sm" href="#" data-action="toggleFavorite" data-toggle-favorite="{{this._id}}">
+                加入最愛
+              </a>
+            {{/if}}
+          </div>
+
+          <div class="mb-1">
+            您在該公司持有{{getCurrentUserOwnedStockAmount this._id}}數量的股份，股權比例為{{getStockPercentage this._id this.totalRelease}}%。
+            <button class="btn btn-info btn-sm" type="button" data-action="createBuyOrder">
+              購入
+            </button>
+            {{#if getCurrentUserOwnedStockAmount this._id}}
+              <button class="btn btn-info btn-sm" type="button" data-action="createSellOrder">
+                賣出
+              </button>
+            {{/if}}
+          </div>
+          {{#each ownOrderList this._id}}
+            <div class="mb-1">
+              您有一筆以單價${{unitPrice}}{{orderType}}數量{{amount}}股份的訂單尚未交易完成，目前已處理了{{done}}數量。
+              <button class="btn btn-danger btn-sm" type="button" data-cancel-order="{{_id}}">
+                取消訂單
+              </button>
+            </div>
+          {{/each}}
+        </div>
+      {{/if}}
+    </div>
+  </div>
+</template>

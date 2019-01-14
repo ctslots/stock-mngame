@@ -1,0 +1,35 @@
+<template name="alertDialog">
+  <form class="modal fade show d-block" role="dialog">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        {{#if showTitle}}
+        <div class="modal-header">
+          <h5 class="modal-title" style="word-break: break-all;">{{alertDialogTitle}}</h5>
+        </div>
+        {{/if}}
+        <div class="modal-body">
+          <div>
+            <div class="form-group" style="word-break: break-all;">
+              {{#if showInput}}
+                <label for="alert-dialog-custom-input" class="form-control-label">{{{alertDialogMessage}}}</label>
+                {{{customInput}}}
+              {{else}}
+                <p>{{{alertDialogMessage}}}</p>
+              {{/if}}
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          {{#if showCancelButton}}
+            <button type="reset" class="btn btn-secondary">
+              取消
+            </button>
+          {{/if}}
+          <button type="submit" class="btn btn-primary">
+            確認
+          </button>
+        </div>
+      </div>
+    </div>
+  </form>
+</template>

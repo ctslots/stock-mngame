@@ -1,0 +1,15 @@
+<template name="companyDetail">
+  <div class="card">
+    <div class="card-block">
+    {{#if company}}
+      {{#if company.isSeal}}
+        {{> companyDetailSealedContent}}
+      {{else}}
+        {{> companyDetailNormalContent}}
+      {{/if}}
+    {{else}}
+      Loading...
+    {{/if}}
+    </div>
+  </div>
+</template>

@@ -1,0 +1,311 @@
+<template name="accountInfo">
+  <div class="card">
+    {{#with paramUser}}
+      {{> accountInfoBasic}}
+      <div class="card-block">
+        <div class="row border-grid-body">
+          {{#if currentUserHasManageableRoles}}
+            <div class="col-12 border-grid">
+              {{#panelFolder name='manageRole' title='身份組管理' }}
+                {{> accountInfoManageRolePanel}}
+              {{/panelFolder}}
+            </div>
+          {{/if}}
+          <div class="col-12 border-grid">
+            {{#panelFolder name='tax' title='稅務資訊' }}
+              {{> accountInfoTaxList}}
+            {{/panelFolder}}
+          </div>
+          <div class="col-12 border-grid">
+            {{#panelFolder name='ownStock' title='持股資訊' }}
+              {{> accountInfoOwnStockList}}
+            {{/panelFolder}}
+          </div>
+          <div class="col-12 border-grid">
+            {{#panelFolder name='stone' title='石頭資訊' }}
+              {{> accountInfoStonePanel}}
+            {{/panelFolder}}
+          </div>
+          <div class="col-12 border-grid">
+            {{#panelFolder name='ownedProducts' title='持有產品' }}
+              {{> accountInfoOwnedProductsPanel}}
+            {{/panelFolder}}
+          </div>
+          <div class="col-12 border-grid">
+            {{#panelFolder name='userViolationCaseList' title='違規案件列表' }}
+              {{> violationCaseTable listType='userViolated' userId=this._id}}
+            {{/panelFolder}}
+          </div>
+          {{#if currentUserHasRole 'fscMember'}}
+            <div class="col-12 border-grid">
+              {{#panelFolder name='userReportedViolationCaseList' title='舉報的違規案件' }}
+                {{> violationCaseTable listType='userReported' userId=this._id}}
+              {{/panelFolder}}
+            </div>
+          {{/if}}
+          <div class="col-12 border-grid">
+            {{#panelFolder name='log' title='玩家紀錄' }}
+              {{> accountInfoLogList}}
+            {{/panelFolder}}
+          </div>
+        </div>
+      </div>
+    {{/with}}
+  </div>
+</template>
+
+<template name="accountInfoBasic">
+  <div class="card-block">
+    <h1 class="card-title"
+        style="
+          overflow-x: hidden;
+          overflow-y: auto;
+          text-overflow: ellipsis;
+          min-height: 3.5rem;
+          max-height: 8.4rem;
+          word-wrap: break-word;
+          line-height: normal;">
+      使用者「{{{styledValidateTypeMarkHtml this.profile.validateType}}}{{this.profile.name}}」帳號資訊
+    </h1>
+    <hr />
+    {{#if currentUser}}
+      <a class="btn btn-danger btn-sm mt-1" href="{{pathForReportUserViolation}}">舉報違規</a>
+      {{#if currentUserHasRole 'fscMember'}}
+        <button class="btn btn-info btn-sm mt-1" type="button" data-action="sendFscNotice">金管會通告</button>
+        {{#if isBanned 'accuse'}}
+          <button class="btn btn-success btn-sm mt-1" type="button" data-ban="accuse">解除舉報禁令</button>
+        {{else}}
+          <button class="btn btn-warning btn-sm mt-1" type="button" data-ban="accuse">禁止舉報</button>
+        {{/if}}
+        {{#if isBanned 'deal'}}
+          <button class="btn btn-success btn-sm mt-1" type="button" data-ban="deal">解除下單禁令</button>
+        {{else}}
+          <button class="btn btn-warning btn-sm mt-1" type="button" data-ban="deal">禁止下單</button>
+        {{/if}}
+        {{#if isBanned 'chat'}}
+          <button class="btn btn-success btn-sm mt-1" type="button" data-ban="chat">解除聊天禁令</button>
+        {{else}}
+          <button class="btn btn-warning btn-sm mt-1" type="button" data-ban="chat">禁止聊天</button>
+        {{/if}}
+        {{#if isBanned 'advertise'}}
+          <button class="btn btn-success btn-sm mt-1" type="button" data-ban="advertise">解除廣告禁令</button>
+        {{else}}
+          <button class="btn btn-warning btn-sm mt-1" type="button" data-ban="advertise">禁止廣告</button>
+        {{/if}}
+        <button class="btn btn-warning btn-sm mt-1" type="button" data-action="confiscateUserMoney">課以罰金</button>
+        <button class="btn btn-warning btn-sm mt-1" type="button" data-action="returnUserMoney">退還罰金</button>
+        {{#if isBanned 'manager'}}
+          <button class="btn btn-success btn-sm mt-1" type="button" data-ban="manager">解除禁任經理</button>
+        {{else}}
+          <button class="btn btn-danger btn-sm mt-1" type="button" data-ban="manager">禁任經理</button>
+        {{/if}}
+        <button class="btn btn-danger btn-sm mt-1" type="button" data-action="forceCancelUserOrders">強制撤銷訂單</button>
+        <button class="btn btn-danger btn-sm mt-1" type="button" data-action="confiscateAllUserStocks">沒收所有股份</button>
+      {{else}}
+        {{#if isBanned 'accuse'}}
+          <div class="text-danger">目前被禁止舉報違規。</div>
+        {{/if}}
+        {{#if isBanned 'deal'}}
+          <div class="text-danger">目前被禁止投資下單。</div>
+        {{/if}}
+        {{#if isBanned 'chat'}}
+          <div class="text-danger">目前被禁止聊天發言。</div>
+        {{/if}}
+        {{#if isBanned 'advertise'}}
+          <div class="text-danger">目前被禁止廣告宣傳。</div>
+        {{/if}}
+      {{/if}}
+      {{#if showUnregisterEmployee}}
+        <button class="btn btn-danger btn-sm mt-1" type="button" data-action="unregisterEmployee">取消員工報名</button>
+      {{/if}}
+
+      {{#if isCurrentUser}}
+        {{#if this.profile.isInVacation}}
+          <button class="btn btn-info btn-sm mt-1" type="button" data-action="toggleEndingVacation">
+            {{#if this.profile.isEndingVacation}}
+              取消結束渡假
+            {{else}}
+              結束渡假
+            {{/if}}
+          </button>
+        {{else}}
+          <button class="btn btn-info btn-sm mt-1" type="button" data-action="startVacation">開始渡假</button>
+        {{/if}}
+      {{/if}}
+      <hr />
+    {{/if}}
+
+    <div>
+      使用者識別碼：{{this._id}}
+    </div>
+    <div>
+      帳號驗證方式：
+      {{showValidateType}}
+    </div>
+    <div>
+      帳號啟動日期：{{formatDateTimeText this.createdAt}}
+    </div>
+    <div>
+      上次登入時間：{{formatDateTimeText this.status.lastLogin.date}}
+    </div>
+    <div>
+      上次登入IP：{{this.status.lastLogin.ipAddr}}
+    </div>
+    <div>
+      本季度未登入天數：{{this.profile.noLoginDayCount}}
+    </div>
+    <div>
+      上季度財富統計：{{currencyFormat this.profile.lastSeasonTotalWealth}}
+    </div>
+    <div>
+      帳號當前餘額：{{currencyFormat this.profile.money}}
+    </div>
+    <div>
+      帳號剩餘消費券：{{currencyFormat this.profile.vouchers}}
+    </div>
+    <div>
+      帳號剩餘推薦票：{{this.profile.voteTickets}}
+    </div>
+    {{#if this.profile.isInVacation}}
+      <div class="text-info">目前正在渡假中。</div>
+      {{#if this.profile.isEndingVacation}}
+        <div class="text-info">將於本商業季度結束渡假。</div>
+      {{/if}}
+    {{/if}}
+    <div>
+      {{#each role in this.profile.roles}}
+        <span class="badge badge-warning">{{roleDisplayName role}}</span>
+      {{/each}}
+    </div>
+    {{#if this.profile.revokeQualification}}
+      <div class="text-danger">
+        被撤銷了擔任經理人的資格！
+      </div>
+    {{/if}}
+    {{> accountCompanyTitle}}
+  </div>
+</template>
+
+<template name="accountCompanyTitle">
+  {{> companyTitleTab}}
+  <div class="tab-content">
+    <div class="tab-pane active" role="tabpanel">
+      {{#if viewType 'chairman'}}
+        {{> chairmanTitleList}}
+      {{/if}}
+      {{#if viewType 'manager'}}
+        {{> managerTitleList}}
+      {{/if}}
+      {{#if viewType 'founder'}}
+        {{> founderTitleList}}
+      {{/if}}
+      {{#if viewType 'employee'}}
+        {{> employeeTitleList}}
+      {{/if}}
+      {{#if viewType 'vip'}}
+        {{> vipTitleList}}
+      {{/if}}
+    </div>
+  </div>
+</template>
+
+<template name="companyTitleTab">
+  <ul class="nav nav-tabs" role="tablist">
+    <li class="nav-item">
+      <a class="{{getClass 'chairman'}}" href="#" data-type="chairman">董事長</a>
+    </li>
+    <li class="nav-item">
+      <a class="{{getClass 'manager'}}" href="#" data-type="manager">經理人</a>
+    </li>
+    <li class="nav-item">
+      <a class="{{getClass 'founder'}}" href="#" data-type="founder">創立人</a>
+    </li>
+    <li class="nav-item">
+      <a class="{{getClass 'employee'}}" href="#" data-type="employee">員工</a>
+    </li>
+    <li class="nav-item">
+      <a class="{{getClass 'vip'}}" href="#" data-type="vip">VIP</a>
+    </li>
+  </ul>
+</template>
+
+<template name="chairmanTitleList">
+  {{#each titleList}}
+    <div class="text-primary d-flex flex-nowrap">
+      <div class="text-nowrap">是「</div>
+      <div class="d-inline-block text-truncate" style="max-width: calc(100% - 11rem);">{{>companyLink this._id}}</div>
+      <div class="text-nowrap">」公司的「</div>
+      <div class="d-inline-block text-truncate" style="max-width: calc(100% - 11rem);">
+        {{#if isCurrentUser}}
+          <a href="#" data-action="changeChairmanTitle">
+            {{this.chairmanTitle}}
+          </a>
+        {{else}}
+          {{this.chairmanTitle}}
+        {{/if}}
+      </div>
+      <div class="text-nowrap">」</div>
+    </div>
+  {{else}}
+    查無資料！
+  {{/each}}
+  {{#with paginationData}}
+    {{> pagination}}
+  {{/with}}
+</template>
+
+<template name="managerTitleList">
+  {{#each titleList}}
+    {{> companyTitle companyId=this._id title='經理人'}}
+  {{else}}
+    查無資料！
+  {{/each}}
+  {{#with paginationData}}
+    {{> pagination}}
+  {{/with}}
+</template>
+
+<template name="founderTitleList">
+  {{#each titleList}}
+    {{> companyTitle companyId=this._id title='創立人'}}
+  {{else}}
+    查無資料！
+  {{/each}}
+  {{#with paginationData}}
+    {{> pagination}}
+  {{/with}}
+</template>
+
+<template name="employeeTitleList">
+  {{#each employment}}
+    {{#if this.employed}}
+      {{> companyTitle companyId=this.companyId isSeal=(isSeal this.companyId) title='員工'}}
+    {{else}}
+      {{> companyTitle companyId=this.companyId isSeal=(isSeal this.companyId) title='儲備員工'}}
+    {{/if}}
+  {{else}}
+    查無資料！
+  {{/each}}
+</template>
+
+<template name="vipTitleList">
+  {{#each vip in vips}}
+    {{> companyTitle companyId=vip.companyId title=(getTitle vip)}}
+  {{else}}
+    查無資料！
+  {{/each}}
+  {{> pagination paginationData}}
+</template>
+
+<template name="companyTitle">
+  <div class="text-primary d-flex flex-nowrap">
+    <div class="text-nowrap">是「</div>
+    <div class="d-inline-block text-truncate">
+      {{#if isSeal}}
+        <span class="badge badge-pill badge-danger">已查封</span>
+      {{/if}}
+      {{>companyLink companyId}}
+    </div>
+    <div class="text-nowrap">」公司的{{title}}。</div>
+  </div>
+</template>

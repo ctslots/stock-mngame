@@ -1,0 +1,145 @@
+<template name="nav">
+  <nav id="nav" class="navbar navbar-toggleable-md navbar-light bg-faded">
+    {{#if currentUser}}
+      <span class="navbar-brand dropdown" title="當前登入使用者：{{currentUser.profile.name}}">
+        <a class="dropdown-toggle d-inline-block text-truncate mw-100" href="#">
+          <i class="fa fa-user-o" aria-hidden="true"></i>
+          {{{styledValidateTypeMarkHtml currentUser.profile.validateType}}}
+          {{currentUser.profile.name}}
+        </a>
+        <div class="dropdown-menu px-3 text-right">
+          <a class="d-block" href="{{getHref 'accountInfo' accountInfoParams}}" title="帳號資訊">
+            <span class="float-left">
+              <i class="fa fa-user-circle" aria-hidden="true"></i>
+            </span>
+            {{getLinkText 'accountInfo' accountInfoParams}}
+          </a>
+          <div title="現有資金：${{currentUser.profile.money}}">
+            <span class="float-left">
+              <i class="fa fa-usd" aria-hidden="true"></i>
+            </span>
+            {{currencyFormat currentUser.profile.money}}
+          </div>
+          <div title="現有消費券：{{currentUser.profile.vouchers}}張">
+            <span class="float-left">
+              <i class="fa fa-money" aria-hidden="true"></i>
+            </span>
+            {{currencyFormat currentUser.profile.vouchers}}
+          </div>
+          <div title="現有推薦票：{{currentUser.profile.voteTickets}}張">
+            <span class="float-left">
+              <i class="fa fa-ticket" aria-hidden="true"></i>
+            </span>
+            {{currentUser.profile.voteTickets}}
+          </div>
+          {{#each stoneType in stoneTypeList}}
+            <div class="d-flex align-items-center justify-content-between" title="現有{{stoneDisplayName stoneType}}：{{userStoneCount currentUser stoneType}}個">
+              <img class="stone-icon" src="{{stoneIconPath stoneType}}" title="{{stoneDisplayName stoneType}}" />
+              {{userStoneCount currentUser stoneType}}
+            </div>
+          {{/each}}
+          <div class="dropdown-divider"></div>
+          <a class="d-block" href="#" title="登出" data-action="logout">
+            <span class="float-left">
+              <i class="fa fa-sign-out" aria-hidden="true"></i>
+            </span>
+            登出
+          </a>
+        </div>
+      </span>
+    {{else}}
+      <span class="navbar-brand dropdown">
+        <a class="dropdown-toggle" href="#">未登入</a>
+        <div class="dropdown-menu px-3 text-right">
+          <a class="d-block" href="#" title="以PTT帳號登入" data-login="PTT">
+            以PTT帳號登入
+          </a>
+          <a class="d-block" href="#" title="以巴哈姆特帳號登入" data-login="Bahamut">
+            以巴哈姆特帳號登入
+          </a>
+          <a class="d-block" href="#" title="以Google帳號登入" data-login="Google">
+            以Google帳號登入
+          </a>
+        </div>
+      </span>
+    {{/if}}
+    <button class="navbar-toggler navbar-toggler-right" type="button">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="{{getNavLinkListClassList}}">
+      <ul class="navbar-nav">
+        {{> navLink page='mainPage'}}
+        {{> navLink page='announcementList'}}
+        {{#navLinkGroup text='交易大廳'}}
+          {{> navLink page='instantMessage'}}
+          {{> navLink page='companyList' params=page1}}
+          {{> navLink page='foundationList' params=page1}}
+          {{> navLink page='advertising'}}
+          {{> navLink page='productCenterBySeason' params=currentSeasonParams}}
+          {{> navLink page='arenaInfo'  params=currentArenaParams}}
+        {{/navLinkGroup}}
+        {{#if hasFavorite}}
+          {{#navLinkGroup text='我的最愛' style='max-width: 100%'}}
+            {{#each companyId in currentUser.favorite}}
+              {{>navCompanyLink companyId}}
+            {{/each}}
+          {{/navLinkGroup}}
+        {{/if}}
+        {{#navLinkGroup text='其他資訊'}}
+          {{> navLink page='tutorial'}}
+          {{> navLink page='seasonalReport' params=previousSeasonParams}}
+          <li class="nav-item">
+            <a class="nav-link" href="https://museum.acgn-stock.com/" target="_blank">
+              歷史博物館
+            </a>
+          </li>
+          {{> navLink page='ruleAgendaList'}}
+          {{> navLink page='violationCaseList'}}
+          {{> navLink page='fscLogs'}}
+          {{> navLink page='fscStock'}}
+        {{/navLinkGroup}}
+        {{#if shouldShowControlCenter}}
+          {{> controlCenterNavLinkGroup}}
+        {{/if}}
+        {{#navLinkGroup text='設定'}}
+          <li class="nav-item">
+            <a class="nav-link" href="#" data-theme="light" data-action="switch-theme">亮色主題</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="#" data-theme="dark" data-action="switch-theme">暗色主題</a>
+          </li>
+        {{/navLinkGroup}}
+        <li class="nav-item text-nowrap">
+          <a class="nav-link" href="https://opencollective.com/acgn-stock" target="_blank">捐款贊助</a>
+        </li>
+      </ul>
+    </div>
+  </nav>
+</template>
+
+<template name="navLinkGroup">
+  <div class="note">
+    <li class="nav-item dropdown text-nowrap">
+      <a class="nav-link dropdown-toggle" href="#" data-toggle="dropdown">
+        {{{text}}}
+      </a>
+      <div class="dropdown-menu px-3 nav-dropdown-menu" style="{{style}}" aria-labelledby="navbarDropdownMenuLink">
+        {{> Template.contentBlock}}
+      </div>
+    </li>
+  </div>
+</template>
+
+<template name="navLink">
+  <li class="{{getClassList}}">
+    <a class="nav-link" href="{{getHref}}">
+      {{getLinkText}}
+    </a>
+  </li>
+</template>
+
+<template name="navCompanyLink">
+  <li class="nav-item">
+    <a class="nav-link text-truncate"></a>
+  </li>
+</template>
